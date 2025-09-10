@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Controle de Carros</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1 { text-align: center; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+    .positivo { color: green; font-weight: bold; }
+    .negativo { color: red; font-weight: bold; }
+    input, button {
+      margin: 5px;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Controle de Carros</h1>
+
+  <form id="formCarro">
+    <input type="text" id="veiculo" placeholder="Veículo" required>
+    <input type="number" id="valorCusto" placeholder="Valor Custo" required>
+    <input type="number" id="oficina" placeholder="Oficina" value="0">
+    <input type="number" id="funilaria" placeholder="Funilaria" value="0">
+    <input type="number" id="documentacao" placeholder="Documentação" value="0">
+    <input type="number" id="outros" placeholder="Outros" value="0">
+    <input type="number" id="valorVenda" placeholder="Valor Venda" required>
+    <button type="submit">Adicionar</button>
+  </form>
+
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Veículo</th>
+        <th>Valor Custo</th>
+        <th>Oficina</th>
+        <th>Funilaria</th>
+        <th>Documentação</th>
+        <th>Outros</th>
+        <th><b>Custo Total</b></th>
+        <th>Valor Venda</th>
+        <th><b>Lucro Real</b></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const form = document.getElementById('formCarro');
+    const tabela = document.querySelector('#tabela tbody');
+
+    // Carregar dados salvos
+    let carros = JSON.parse(localStorage.getItem('carros')) || [];
+
+    function salvar() {
+      localStorage.setItem('carros', JSON.stringify(carros));
+    }
+
+    function atualizarTabela() {
+      tabela.innerHTML = '';
+      carros.forEach(carro => {
+        const tr = document.createElement('tr');
+        const custoTotal = carro.valorCusto + carro.oficina + carro.funilaria + carro.documentacao + carro.outros;
+        const lucro = carro.valorVenda - custoTotal;
+
+        tr.innerHTML = `
+          <td>${carro.veiculo}</td>
+          <td>R$ ${carro.valorCusto.toFixed(2)}</td>
+          <td>R$ ${carro.oficina.toFixed(2)}</td>
+          <td>R$ ${carro.funilaria.toFixed(2)}</td>
+          <td>R$ ${carro.documentacao.toFixed(2)}</td>
+          <td>R$ ${carro.outros.toFixed(2)}</td>
+          <td><b>R$ ${custoTotal.toFixed(2)}</b></td>
+          <td>R$ ${carro.valorVenda.toFixed(2)}</td>
+          <td class="${lucro >= 0 ? 'positivo' : 'negativo'}">
+            R$ ${lucro.toFixed(2)}
+          </td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const carro = {
+        veiculo: document.getElementById('veiculo').value,
+        valorCusto: parseFloat(document.getElementById('valorCusto').value),
+        oficina: parseFloat(document.getElementById('oficina').value),
+        funilaria: parseFloat(document.getElementById('funilaria').value),
+        documentacao: parseFloat(document.getElementById('documentacao').value),
+        outros: parseFloat(document.getElementById('outros').value),
+        valorVenda: parseFloat(document.getElementById('valorVenda').value)
+      };
+      carros.push(carro);
+      salvar();
+      atualizarTabela();
+      form.reset();
+    });
+
+    atualizarTabela();
+  </script>
+</body>
+</html>
