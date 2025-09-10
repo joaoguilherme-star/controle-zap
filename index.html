@@ -154,6 +154,42 @@
     //   localStorage.setItem('carros', JSON.stringify(carros));
     // }
 
+    //teste abaixo
+    let carros = [];
+
+    async function carregarCarros() {
+      const response = await fetch(API_URL);
+      carros = await response.json();
+      atualizarTabela();
+    }
+
+    async function salvarCarro(carro) {
+      await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(carro),
+        headers: { "Content-Type": "application/json" }
+      });
+      await carregarCarros();
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const carro = {
+        veiculo: document.getElementById('veiculo').value,
+        valorCusto: limparMascara(document.getElementById('valorCusto').value),
+        oficina: limparMascara(document.getElementById('oficina').value),
+        funilaria: limparMascara(document.getElementById('funilaria').value),
+        documentacao: limparMascara(document.getElementById('documentacao').value),
+        outros: limparMascara(document.getElementById('outros').value),
+        valorVenda: limparMascara(document.getElementById('valorVenda').value)
+      };
+      await salvarCarro(carro);
+      form.reset();
+    });
+
+  //teste acima 
+
+
     function formatarBRL(valor) {
       return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     }
