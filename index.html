@@ -122,15 +122,37 @@
   </div>
 
   <script>
+
+    const API_URL = "https://script.google.com/macros/s/AKfycbz237gc9b-SOLZ-tttGgYiRwB2odamAZxeTMqkTudVhT1rFvkuuhkEr-CuRxj7OFcGf/exec"; // coloque a URL gerada no Apps Script
+
+    // Buscar dados
+    async function carregarCarros() {
+    const response = await fetch(API_URL);
+    const data = await response.json();
+    console.log("Carros:", data);
+    // aqui você pode montar a tabela com os dados recebidos
+    }
+
+    // Adicionar carro
+    async function salvarCarro(carro) {
+    await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(carro),
+        headers: { "Content-Type": "application/json" }
+    });
+    carregarCarros(); // recarregar lista
+    }
+
+
     const form = document.getElementById('formCarro');
     const tabela = document.querySelector('#tabela tbody');
     const editIndexField = document.getElementById('editIndex');
 
-    let carros = JSON.parse(localStorage.getItem('carros')) || [];
+    // let carros = JSON.parse(localStorage.getItem('carros')) || [];
 
-    function salvar() {
-      localStorage.setItem('carros', JSON.stringify(carros));
-    }
+    // function salvar() {
+    //   localStorage.setItem('carros', JSON.stringify(carros));
+    // }
 
     function formatarBRL(valor) {
       return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
