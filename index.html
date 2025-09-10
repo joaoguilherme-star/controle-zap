@@ -6,18 +6,65 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 10px;
+      padding: 0;
+      background: #f8f9fa;
     }
-    h1 { text-align: center; }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px; /* mais espaço entre os inputs */
+      margin-bottom: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 12px 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      min-height: 45px; /* deixa os inputs mais altos */
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 4px rgba(0,123,255,0.4);
+    }
+    button {
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .tabela-container {
+      overflow-x: auto;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
     table {
       border-collapse: collapse;
       width: 100%;
-      margin-top: 20px;
+      min-width: 1000px;
     }
     th, td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
+      white-space: nowrap;
     }
     th {
       background-color: #f4f4f4;
@@ -27,90 +74,148 @@
     }
     .positivo { color: green; font-weight: bold; }
     .negativo { color: red; font-weight: bold; }
-    input, button {
-      margin: 5px;
-      padding: 8px;
+    .btn-acao {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 2px;
     }
+    .editar { background: #ffc107; color: black; }
+    .remover { background: #dc3545; color: white; }
   </style>
 </head>
 <body>
   <h1>📊 Controle de Carros</h1>
 
   <form id="formCarro">
+    <input type="hidden" id="editIndex">
     <input type="text" id="veiculo" placeholder="Veículo" required>
-    <input type="number" id="valorCusto" placeholder="Valor Custo" required>
-    <input type="number" id="oficina" placeholder="Oficina" value="0">
-    <input type="number" id="funilaria" placeholder="Funilaria" value="0">
-    <input type="number" id="documentacao" placeholder="Documentação" value="0">
-    <input type="number" id="outros" placeholder="Outros" value="0">
-    <input type="number" id="valorVenda" placeholder="Valor Venda" required>
-    <button type="submit">Adicionar</button>
+    <input type="text" class="money" id="valorCusto" placeholder="Valor Custo (R$)" required>
+    <input type="text" class="money" id="oficina" placeholder="Oficina (R$)" value="0">
+    <input type="text" class="money" id="funilaria" placeholder="Funilaria (R$)" value="0">
+    <input type="text" class="money" id="documentacao" placeholder="Documentação (R$)" value="0">
+    <input type="text" class="money" id="outros" placeholder="Outros (R$)" value="0">
+    <input type="text" class="money" id="valorVenda" placeholder="Valor Venda (R$)" required>
+    <button type="submit">Salvar</button>
   </form>
 
-  <table id="tabela">
-    <thead>
-      <tr>
-        <th>Veículo</th>
-        <th>Valor Custo</th>
-        <th>Oficina</th>
-        <th>Funilaria</th>
-        <th>Documentação</th>
-        <th>Outros</th>
-        <th><b>Custo Total</b></th>
-        <th>Valor Venda</th>
-        <th><b>Lucro Real</b></th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="tabela-container">
+    <table id="tabela">
+      <thead>
+        <tr>
+          <th>Veículo</th>
+          <th>Valor Custo</th>
+          <th>Oficina</th>
+          <th>Funilaria</th>
+          <th>Documentação</th>
+          <th>Outros</th>
+          <th><b>Custo Total</b></th>
+          <th>Valor Venda</th>
+          <th><b>Lucro Real</b></th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
     const form = document.getElementById('formCarro');
     const tabela = document.querySelector('#tabela tbody');
+    const editIndexField = document.getElementById('editIndex');
 
-    // Carregar dados salvos
     let carros = JSON.parse(localStorage.getItem('carros')) || [];
 
     function salvar() {
       localStorage.setItem('carros', JSON.stringify(carros));
     }
 
+    function formatarBRL(valor) {
+      return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function limparMascara(valor) {
+      return parseFloat(valor.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+
+    function aplicarMascaraMoeda(input) {
+      input.addEventListener("input", e => {
+        let valor = e.target.value.replace(/\D/g, "");
+        valor = (parseInt(valor) / 100).toFixed(2);
+        e.target.value = parseFloat(valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      });
+    }
+
+    document.querySelectorAll(".money").forEach(input => aplicarMascaraMoeda(input));
+
     function atualizarTabela() {
       tabela.innerHTML = '';
-      carros.forEach(carro => {
+      carros.forEach((carro, index) => {
         const tr = document.createElement('tr');
         const custoTotal = carro.valorCusto + carro.oficina + carro.funilaria + carro.documentacao + carro.outros;
         const lucro = carro.valorVenda - custoTotal;
 
         tr.innerHTML = `
           <td>${carro.veiculo}</td>
-          <td>R$ ${carro.valorCusto.toFixed(2)}</td>
-          <td>R$ ${carro.oficina.toFixed(2)}</td>
-          <td>R$ ${carro.funilaria.toFixed(2)}</td>
-          <td>R$ ${carro.documentacao.toFixed(2)}</td>
-          <td>R$ ${carro.outros.toFixed(2)}</td>
-          <td><b>R$ ${custoTotal.toFixed(2)}</b></td>
-          <td>R$ ${carro.valorVenda.toFixed(2)}</td>
-          <td class="${lucro >= 0 ? 'positivo' : 'negativo'}">
-            R$ ${lucro.toFixed(2)}
+          <td>${formatarBRL(carro.valorCusto)}</td>
+          <td>${formatarBRL(carro.oficina)}</td>
+          <td>${formatarBRL(carro.funilaria)}</td>
+          <td>${formatarBRL(carro.documentacao)}</td>
+          <td>${formatarBRL(carro.outros)}</td>
+          <td><b>${formatarBRL(custoTotal)}</b></td>
+          <td>${formatarBRL(carro.valorVenda)}</td>
+          <td class="${lucro >= 0 ? 'positivo' : 'negativo'}">${formatarBRL(lucro)}</td>
+          <td>
+            <button class="btn-acao editar" onclick="editarCarro(${index})">✏️ Editar</button>
+            <button class="btn-acao remover" onclick="removerCarro(${index})">🗑️ Remover</button>
           </td>
         `;
         tabela.appendChild(tr);
       });
     }
 
+    function editarCarro(index) {
+      const carro = carros[index];
+      document.getElementById('veiculo').value = carro.veiculo;
+      document.getElementById('valorCusto').value = carro.valorCusto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      document.getElementById('oficina').value = carro.oficina.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      document.getElementById('funilaria').value = carro.funilaria.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      document.getElementById('documentacao').value = carro.documentacao.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      document.getElementById('outros').value = carro.outros.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      document.getElementById('valorVenda').value = carro.valorVenda.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      editIndexField.value = index;
+    }
+
+    function removerCarro(index) {
+      if (confirm("Deseja realmente remover este carro?")) {
+        carros.splice(index, 1);
+        salvar();
+        atualizarTabela();
+      }
+    }
+
     form.addEventListener('submit', e => {
       e.preventDefault();
       const carro = {
         veiculo: document.getElementById('veiculo').value,
-        valorCusto: parseFloat(document.getElementById('valorCusto').value),
-        oficina: parseFloat(document.getElementById('oficina').value),
-        funilaria: parseFloat(document.getElementById('funilaria').value),
-        documentacao: parseFloat(document.getElementById('documentacao').value),
-        outros: parseFloat(document.getElementById('outros').value),
-        valorVenda: parseFloat(document.getElementById('valorVenda').value)
+        valorCusto: limparMascara(document.getElementById('valorCusto').value),
+        oficina: limparMascara(document.getElementById('oficina').value),
+        funilaria: limparMascara(document.getElementById('funilaria').value),
+        documentacao: limparMascara(document.getElementById('documentacao').value),
+        outros: limparMascara(document.getElementById('outros').value),
+        valorVenda: limparMascara(document.getElementById('valorVenda').value)
       };
-      carros.push(carro);
+
+      const editIndex = editIndexField.value;
+      if (editIndex !== "") {
+        carros[editIndex] = carro;
+        editIndexField.value = "";
+      } else {
+        carros.push(carro);
+      }
+
       salvar();
       atualizarTabela();
       form.reset();
