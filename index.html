@@ -249,8 +249,8 @@
     async function removerCarro(index) {
       if (confirm("Deseja realmente remover este carro?")) {
         await fetch(API_URL, {
-          method: "DELETE",
-          body: JSON.stringify({ index }),
+          method: "POST",
+          body: JSON.stringify({ index, _method: "DELETE" }),
           headers: { "Content-Type": "application/json" }
         });
         await carregarCarros();
@@ -273,8 +273,8 @@
       const editIndex = editIndexField.value;
       if (editIndex !== "") {
         await fetch(API_URL, {
-          method: "PUT",
-          body: JSON.stringify({ ...carro, index: Number(editIndex) }),
+          method: "POST",
+          body: JSON.stringify({ ...carro, index: Number(editIndex), _method: "PUT" }),
           headers: { "Content-Type": "application/json" }
         });
         editIndexField.value = "";
