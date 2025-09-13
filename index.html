@@ -187,7 +187,7 @@
       form.reset();
     });
 
-  //teste acima 
+//teste acima 
 
 
     function formatarBRL(valor) {
@@ -234,7 +234,7 @@
       });
     }
 
-    function editarCarro(index) {
+    async function editarCarro(index) {
       const carro = carros[index];
       document.getElementById('veiculo').value = carro.veiculo;
       document.getElementById('valorCusto').value = carro.valorCusto.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
@@ -246,15 +246,19 @@
       editIndexField.value = index;
     }
 
-    function removerCarro(index) {
+    async function removerCarro(index) {
       if (confirm("Deseja realmente remover este carro?")) {
-        carros.splice(index, 1);
-        salvar();
-        atualizarTabela();
+        await fetch(API_URL, {
+          method: "DELETE",
+          body: JSON.stringify({ index }),
+          headers: { "Content-Type": "application/json" }
+        });
+        await carregarCarros();
       }
     }
 
-    form.addEventListener('submit', e => {
+    // Altere o submit do formulário para editar via API:
+    form.addEventListener('submit', async e => {
       e.preventDefault();
       const carro = {
         veiculo: document.getElementById('veiculo').value,
@@ -268,14 +272,16 @@
 
       const editIndex = editIndexField.value;
       if (editIndex !== "") {
-        carros[editIndex] = carro;
+        await fetch(API_URL, {
+          method: "PUT",
+          body: JSON.stringify({ ...carro, index: Number(editIndex) }),
+          headers: { "Content-Type": "application/json" }
+        });
         editIndexField.value = "";
       } else {
-        carros.push(carro);
+        await salvarCarro(carro);
       }
-
-      salvar();
-      atualizarTabela();
+      await carregarCarros();
       form.reset();
     });
 
